@@ -15,7 +15,7 @@ services:
       - inception
     env_file:
       - .env
-    restart: always
+    #restart: always
 
   mariadb:
     container_name: mariadb
@@ -27,10 +27,10 @@ services:
       - mariadb:/var/lib/mysql
     networks:
       - inception
-    restart: always
+    #restart: always
 
   wordpress:
-    container_build: wordpress
+    container_name: wordpress
     build: ./requirements/wordpress/
     env_file:
       - .env
@@ -39,24 +39,24 @@ services:
       - wordpress:/var/www/html
     networks:
       - inception
-    restart: always
+    #restart: always
 
 volumes:
-    mariadb:
-      name: mariadb
-      driver: local
-      driver_opts:
-      device: Users/eportela/Desktop/Inception/mariadb 
+  mariadb:
+    name: mariadb
+    driver: local
+    driver_opts:
+      device: /home/eportela/Desktop/42Inception/mariadb
       o: bind
       type: none
-    wordpress:
-      name: wordpress
-      driver: local
-      driver_opts: Users/eportela/Desktop/Inception/wordpress
-      device:
+  wordpress:
+    name: wordpress
+    driver: local
+    driver_opts:
+      device: /home/eportela/Desktop/42Inception/wordpress
       o: bind
       type: none
 
 networks:
   inception:
-      name: inception
+    name: inception

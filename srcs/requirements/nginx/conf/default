@@ -1,0 +1,36 @@
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+
+    server_name eportela.42.fr;
+
+    ssl_certificate /etc/letsencrypt/live/eportela.42.fr/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/eportela.42.fr/privkey.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    index index.php;
+    root /var/www/html;
+
+    location ~ [^/]\.php(/|$) {
+        try_files $uri =404;
+        fastcgi_pass wordpress:9000;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+
+    server_name eportela.42.fr;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}

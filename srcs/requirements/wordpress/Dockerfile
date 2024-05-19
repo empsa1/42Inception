@@ -1,9 +1,10 @@
 FROM debian:11
 
-RUN apt-get update && apt-get install -y php php-fpm php-mysql
+RUN apt update -y 
+RUN apt install php-fpm php-mysql curl -y
 
-COPY conf/php-fpm.conf /etc/php/7.4/fpm/php-fpm.conf
+COPY ./tools/script.sh /
+COPY ./tools/wp-config.php /var/www/html/
 
-EXPOSE 9000
+CMD [ "./script.sh" ]
 
-CMD ["php-fpm"]
