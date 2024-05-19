@@ -2,47 +2,61 @@ version: '3.8'
 
 services:
   nginx:
-    build:
-      context: ./requirements/nginx
+    container_name: nginx
+    build: ./requirements/nginx/
     ports:
       - "443:443"
+    image: nginx:42
+    depends_on:
+      - wordpress
     volumes:
-      - nginx_data:/etc/nginx
+      - wordpress:/var/www/html
     networks:
-      - my_network
-    environment:
-      - DOMAIN_NAME=${DOMAIN_NAME}
+      - inception
+    env_file:
+      - .env
+    restart: always
 
   mariadb:
-    build:
-      context: ./requirements/mariadb
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: wordpress
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    container_name: mariadb
+    build: ./requirements/mariadb/
+    env_file:
+      - .env
+    image: mariadb:42
     volumes:
-      - mariadb_data:/var/lib/mysql
+      - mariadb:/var/lib/mysql
     networks:
-      - my_network
+      - inception
+    restart: always
 
   wordpress:
-    build:
-      context: ./requirements/wordpress
-    environment:
-      WORDPRESS_DB_HOST: mariadb
-      WORDPRESS_DB_USER: ${MYSQL_USER}
-      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
-      WORDPRESS_DB_NAME: wordpress
+    container_build: wordpress
+    build: ./requirements/wordpress/
+    env_file:
+      - .env
+    image: wordpress:42
     volumes:
-      - wordpress_data:/var/www/html
+      - wordpress:/var/www/html
     networks:
-      - my_network
+      - inception
+    restart: always
 
 volumes:
-  mariadb_data:
-  wordpress_data:
-  nginx_data:
+    mariadb:
+      name: mariadb
+      driver: local
+      driver_opts:
+      device: Users/eportela/Desktop/Inception/mariadb 
+      o: bind
+      type: none
+    wordpress:
+      name: wordpress
+      driver: local
+      driver_opts: Users/eportela/Desktop/Inception/wordpress
+      device:
+      o: bind
+      type: none
 
 networks:
-  my_network:
+  inception:
+      name: inception
