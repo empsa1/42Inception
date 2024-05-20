@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.5'
 
 services:
   nginx:
@@ -6,57 +6,56 @@ services:
     build: ./requirements/nginx/
     ports:
       - "443:443"
-    image: nginx:42
     depends_on:
       - wordpress
     volumes:
       - wordpress:/var/www/html
     networks:
       - inception
-    env_file:
-      - .env
-    #restart: always
+    stdin_open: true
+    tty: true        
+    restart: always
 
   mariadb:
     container_name: mariadb
     build: ./requirements/mariadb/
-    env_file:
-      - .env
-    image: mariadb:42
+    env_file: .env
     volumes:
-      - mariadb:/var/lib/mysql
+      - db:/var/lib/mysql
     networks:
       - inception
-    #restart: always
+    restart: always
 
   wordpress:
     container_name: wordpress
     build: ./requirements/wordpress/
-    env_file:
-      - .env
-    image: wordpress:42
+    ports:
+      - "9000:9000"
+    env_file: .env
     volumes:
       - wordpress:/var/www/html
+    depends_on:
+      - mariadb
     networks:
       - inception
-    #restart: always
+    restart: always
 
 volumes:
-  mariadb:
-    name: mariadb
+  db:
     driver: local
     driver_opts:
-      device: /home/eportela/Desktop/42Inception/mariadb
+      device: /home/eportela/mariadb
       o: bind
       type: none
   wordpress:
     name: wordpress
     driver: local
     driver_opts:
-      device: /home/eportela/Desktop/42Inception/wordpress
+      device: /home/eportela/wordpress
       o: bind
       type: none
 
 networks:
   inception:
     name: inception
+    driver: bridge
