@@ -1,45 +1,43 @@
 #!/bin/bash
 
-# Load environment variables from .env file
-source .env
+sed -ie "s/listen = \/run\/php\/php7.4-fpm.sock/listen = 0.0.0.0:9000/" /etc/php/7.4/fpm/pool.d/www.conf
 
-# Create directory for WordPress installation
-mkdir -p /var/www/html
 
-# Navigate to the WordPress directory
-cd /var/www/html
+echo "---------------------------------"
+wall " Printing the environment variables"
+echo "MYSQL_DATABASE: $BDD_NAME"
+echo "MYSQL_USER: $BDD_USER"
+echo "MYSQL_PASSWORD: $BDD_USER_PASSWORD"
+echo "DB_HOST: $DB_HOST"
+echo "WP_URL: $WP_URL"
+echo "WP_TITLE: $WP_TITLE"
+echo "WP_ADMIN: $WP_ADMIN"
+echo "WP_ADMIN_PASSWORD: $WP_ADMIN_PASSWORD"
+echo "WP_USER: $WP_USER"
+echo "WP_USER_PASSWORD: $WP_USER_PASSWORD"
+echo "---------------------------------"
 
-# Remove existing files
-rm -rf *
 
-# Download and install WP CLI
-curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar 
-chmod +x wp-cli.phar 
-mv wp-cli.phar /usr/local/bin/wp
+if [ ! -f /var/www/html/wp-config.php ]; then
+	
+	cd /var/www/html/
+	mv 	/wp-config.php /var/www/html/
 
-# Download WordPress core files
-wp core download --allow-root
+	sed -i "s/__MYSQL_DATABASE__/'$BDD_NAME'/g" /var/www/html/wp-config.php
+	sed -i "s/__MYSQL_USER__/'$BDD_USER'/g" /var/www/html/wp-config.php
+	sed -i "s/__MYSQL_PASSWORD__/'$BDD_ROOT_PASSWORD'/g" /var/www/html/wp-config.php
+	sed -i "s/__DB_HOST__/'$DB_HOST'/g" /var/www/html/wp-config.php
+	
+	wp core download --allow-root
+	until mysqladmin -hmariadb -u${MYSQL_USER} -p${MYSQL_PASSWORD} ping; do
+       sleep 2
+    done
+	wp config create --dbname=${BDD_NAME} --dbuser=${BDD_USER} --dbpass=${BDD_USER_PASSWORD} --dbhost=mariadb:3306 --dbcharset="utf8" --dbcollate="utf8_general_ci" --allow-root
+	wp core install --url=${WP_URL} --title="${WP_TITLE}" --admin_user=${WP_ADMIN} --admin_password=${WP_ADMIN_PASSWORD} --admin_email="$WP_ADMIN@student.42.fr" --allow-root
+	wp user create ${WP_USER} "$WP_USER"@user.com --role=author --user_pass=${WP_USER_PASSWORD} --allow-root
 
-# Create wp-config.php from sample configuration
-wp config create --dbname="$BDD_NAME" --dbuser="$BDD_USER" --dbpass="$BDD_USER_PASSWORD" --dbhost="$BDD_HOST" --skip-check --allow-root
+	chown -R www-data:www-data /var/www/html/wp-content
+fi
 
-# Install WordPress
-wp core install --url="$DOMAIN_NAME/" --title="$WP_TITLE" --admin_user="$WP_ADMIN_USER" --admin_password="$WP_ADMIN_PASSWORD" --admin_email="$WP_ADMIN_EMAIL" --skip-email --allow-root
 
-# Create a new user
-wp user create "$WP_USER" "$WP_USER_EMAIL" --role="$WP_USER_ROLE" --user_pass="$WP_USER_PASSWORD" --allow-root
-
-# Install Astra theme and activate it
-wp theme install astra --activate --allow-root
-
-# Update all plugins
-wp plugin update --all --allow-root
-
-# Replace the PHP-FPM socket with port 9000 in the FPM pool configuration
-sed -i 's/listen = \/run\/php\/php7.3-fpm.sock/listen = 9000/g' /etc/php/7.3/fpm/pool.d/www.conf
-
-# Create directory for PHP-FPM socket
-mkdir -p /run/php
-
-# Start PHP-FPM
-/usr/sbin/php-fpm7.3 -F
+exec /usr/sbin/php-fpm7.4 -F

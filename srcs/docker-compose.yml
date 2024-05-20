@@ -5,6 +5,7 @@ services:
     container_name: nginx
     build: ./requirements/nginx/
     ports:
+      - "80:80"
       - "443:443"
     depends_on:
       - wordpress
@@ -22,6 +23,8 @@ services:
     env_file: .env
     volumes:
       - db:/var/lib/mysql
+    expose:
+      - 3306
     networks:
       - inception
     restart: always
@@ -29,8 +32,8 @@ services:
   wordpress:
     container_name: wordpress
     build: ./requirements/wordpress/
-    ports:
-      - "9000:9000"
+    expose:
+      - 9000
     env_file: .env
     volumes:
       - wordpress:/var/www/html
@@ -48,7 +51,6 @@ volumes:
       o: bind
       type: none
   wordpress:
-    name: wordpress
     driver: local
     driver_opts:
       device: /home/eportela/wordpress
@@ -57,5 +59,4 @@ volumes:
 
 networks:
   inception:
-    name: inception
     driver: bridge
